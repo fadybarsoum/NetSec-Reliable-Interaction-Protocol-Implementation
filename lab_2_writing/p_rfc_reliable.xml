@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!-- This template is modified by Seth Nielson for creating P-RFC's
+    (Playground-RFC's). -->
+<!-- This template is for creating an Internet Draft using xml2rfc,
+    which is available here: http://xml2rfc.ietf.org. -->
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!-- One method to get references from the online citation libraries.
+    There has to be one entity for each item to be referenced. 
+    An alternate method (rfc include) is described in the references. -->
+
+<!ENTITY RFC2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2629 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2629.xml">
+<!ENTITY RFC3552 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.3552.xml">
+<!ENTITY RFC5226 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5226.xml">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<!-- used by XSLT processors -->
+<!-- For a complete list and description of processing instructions (PIs), 
+    please see http://xml2rfc.ietf.org/authoring/README.html. -->
+<!-- Below are generally applicable Processing Instructions (PIs) that most I-Ds might want to use.
+    (Here they are set differently than their defaults in xml2rfc v1.32) -->
+<?rfc strict="yes" ?>
+<!-- give errors regarding ID-nits and DTD validation -->
+<!-- control the table of contents (ToC) -->
+<?rfc toc="yes"?>
+<!-- generate a ToC -->
+<?rfc tocdepth="4"?>
+<!-- the number of levels of subsections in ToC. default: 3 -->
+<!-- control references -->
+<?rfc symrefs="yes"?>
+<!-- use symbolic references tags, i.e, [RFC2119] instead of [1] -->
+<?rfc sortrefs="yes" ?>
+<!-- sort the reference entries alphabetically -->
+<!-- control vertical white space 
+    (using these PIs as follows is recommended by the RFC Editor) -->
+<?rfc compact="yes" ?>
+<!-- do not start each main section on a new page -->
+<?rfc subcompact="no" ?>
+<!-- keep one blank line between list items -->
+<!-- end of list of popular I-D processing instructions -->
+
+
+
+
+<rfc category="std" docName="p_rfc_reliable" ipr="playgroundSpring201604" number="1">
+ <!-- category values: std, bcp, info, exp, and historic
+    ipr values: trust200902, noModificationTrust200902, noDerivativesTrust200902,
+       or pre5378Trust200902, playgroundWinter201501
+    you can add the attributes updates="NNNN" and obsoletes="NNNN" 
+    they will automatically be output with "(if approved)" -->
+
+ <!-- ***** FRONT MATTER ***** -->
+
+ <front>
+   <!-- The abbreviated title is used in the page header - it is only necessary if the 
+        full title is longer than 39 characters -->
+
+   <title abbrev="PRFC PEIRC Proposal Lab#2">Playground Request For Comments - Protocol for Excessively Informative Reliable Communication (PEIRC) (Lab#2)</title>
+
+   <!-- add 'role="editor"' below for the editors if appropriate -->
+
+   <!-- Another author who claims to be an editor -->
+
+   <author fullname="Fady Barsoum" initials="FB" role="editor"
+           surname="Barsoum">
+     <organization>JHU Network Security Fall 2016</organization>
+
+     <address>
+       <postal>
+         <street>JHU 160 Malone Hall/3400 North Charles St.</street>
+
+         <!-- Reorder these if your country does things differently -->
+
+         <city>Baltimore</city>
+
+         <region>MD</region>
+
+         <code>21218</code>
+
+         <country>USA</country>
+       </postal>
+
+       <phone>+1 410-497-7384</phone>
+
+       <email>fady.barsoum@jhu.edu</email>
+
+       <!-- uri and facsimile elements may also be added -->
+     </address>
+   </author>
+
+   <date year="2016" month="September"/>
+
+   <!-- If the month and year are both specified and are the current ones, xml2rfc will fill 
+        in the current day for you. If only the current year is specified, xml2rfc will fill 
+	 in the current day and month for you. If the year is not the current one, it is 
+	 necessary to specify at least a month (xml2rfc assumes day="1" if not specified for the 
+	 purpose of calculating the expiry date).  With drafts it is normally sufficient to 
+	 specify just the year. -->
+
+   <!-- Meta-data Declarations -->
+
+   <area>General</area>
+
+   <workgroup>Playground Experiment Director</workgroup>
+
+   <!-- WG name at the upperleft corner of the doc,
+        IETF is fine for individual submissions.  
+	 If this element is not present, the default is "Network Working Group",
+        which is used by the RFC Editor as a nod to the history of the IETF. -->
+
+   <keyword>PRFC</keyword>
+   <keyword>Playground Request for Comment</keyword>
+   <keyword>Reliability</keyword>
+   <keyword>PEIRC</keyword>
+   <keyword>XML</keyword>
+
+   <!-- Keywords will be incorporated into HTML output
+        files in a meta tag but they have no effect on text or nroff
+        output. If you submit your draft to the RFC Editor, the
+        keywords will be used for the search engine. -->
+
+   <abstract>
+     <t>This Playground RFC describes the Protocol for Excessively Informative Reliable Communication (PEIRC) on the Transport Layer of a network. PEIRC aims to reduce some of the vulnerabilities, ambiguities, and unreliabilities of TCP by providing extra pieces of information in each message that are used to make congestion control decisions on both ends of a connection, while also helping participants detect and diagnose the source of these issues. </t>
+   </abstract>
+ </front>
+
+ <middle>
+   <section title="Introduction">
+     <t>Protocol for Excessively Informative Reliable Communication (PEIRC) is a Transport Layer protocol based on TCP which is intended as an overlay over the Playground network. PEIRC aims to reduce some of the vulnerabilities, ambiguities, and unreliabilities of TCP by providing extra pieces of information that are used to make congestion control decisions on both ends of a connection, while also helping participants detect and diagnose the source of these issues. It uses intelligent timestamps and numbering to maintain order, confirm receipt and integrity of messages, and detect inconsistencies and issues.</t>
+   </section>
+   <section title="Requirements Language">
+ 		 <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <xref
+target="RFC2119">RFC 2119</xref>.</t>
+	 </section>
+   <section title="Overview">
+    <t>PEIRC is based entirely on TCP except dictionary-type messages are used instead of packets and the following:</t>
+   	<section title="TCP Handshake">
+   		<t>The TCP handshake is used in PEIRC, with the addition of a timestamp being communicated and recorded by each side. Details on the use of these timestamps is below.</t> 
+   	</section>
+   	<section title="Message Numbering">
+   		<t>Message numbering in PEIRC is replaced with timestamping (described below) such that the numbers are unique, meaning even a retransmission gets a new number.</t> 
+   	</section>
+   	<section title="2-Way Weighted Congestion Control">
+   	<t>Each message includes a local UNIX microseconds timestamp of when the message was sent and one for when the receiver's last message was received by the sender. While timestamps from two endpoints CANNOT be directly compared for many many reasons, keeping a history of these timestamps and how they compare with the previous timestamps and local timestamps can help an endpoint determine the cause of the delays and potentially to detect address spoofing attempts.</t>
+   	<t>Congestion control at endpoints uses this awareness of connection issues to intelligiently determine how to throttle connections. For example, if only one connection is experiencing dropped messages, only that connection is throttled. On the other hand if all connections are experiencing issues, a global throttling value compensates.</t>
+   	<t>As a cautionary note, since the integrity hash is calculated and added to the message after the sent-timestamp, the sent-timestamp can be more accurately described as the message-formed-timestamp.</t>
+   	</section>
+   	<section title="Notifications and Flags">
+   	<t>Endpoints can notify each other using certain flags in the message when they detect issues. The following flags and behaviors MUST be implemented:
+		 	<list style="symbols">
+			 	<t>NMM - In a spoofed address attempt, when an unsolicited non-SYN message is received from the victim, the receiver notifies the sender that they never initiated this connection by setting the NMM flag, ostensibly along with a request to terminate this connection.</t>
+			 	<t>RPT - When a sender retransmits a message, the corresponding RPT flag is set in the message to notify the receiver.</t>
+			 	<t>BHR - When a message's calculated hash does not match the one included in the message, the receiver sends back a message with the BHR flag set, inducing the sender to retransmit the message.</t>
+			 	<t>CYC - When a receiver notices a discrepancy in the timestamps of the received messages, such as messages jumping around in time or a response being sent supposedly before the request was sent, a message with the CYC flag set is sent to the sender to alert them of the issue. This may help detect address spoofing attempts.</t>
+		 	</list>
+   	</t>
+   	</section>
+   	<section title="Integrity Hash">
+   	<t>Instead of a basic checksum, PEIRC uses SHA-256 to calculate a hash of the message's contents than can be used to verify its integrity at the receiving endpoint. (Specifically, the entire message is formed without the hash value, then the hash is calculated and added to the message. The receiver removes the hash value from the message before calculating it to compare.)</t>
+   	</section>
+   	<section title="Recaps and Recap Requests">
+   	<t>Endpoints can request and send each other Recaps and Recap Requests. Recaps are messages that include a list ("recap-rcvd") of timestamps of correctly received messages within this connection. They can be sent voluntarily or by request. Recap Requests themselves include a list ("recap-rqst-sent") of timestamps of messages the sender has sent, including the one of the message the list is sent in and any retransmissions of past timestamps. Recaps serve to confirm that all sent messages have been received and also help detect anomolies. Voluntary Recaps SHOULD be used often as a form of ACK.</t>
+   	</section>
+   </section>
+   <section title="Message Details">
+   <t>PEIRC messages follow the following dictionary-type layout (written here in Python):
+   <figure><artwork><![CDATA[
+class PEIRCMessage(MessageDefinition):
+  PLAYGROUND_IDENTIFIER = "apps.PERIC.PEIRCMessage"
+  MESSAGE_VERSION = "0.1"
+  BODY = [ ("src-addr", STRING),
+           ("dest-addr", STRING),
+           ("sent-timestamp", UINT8),
+           ("rcvd-timestamp", UINT8, OPTIONAL), #only optional in SYN
+           ("window", UINT2),
+           ("SYN", BOOL1, OPTIONAL),
+           ("ACK", BOOL1, OPTIONAL),
+           ("FIN", BOOL1, OPTIONAL),
+           ("NMM", BOOL1, OPTIONAL),
+           ("RPT", BOOL1, OPTIONAL),
+           ("BHR", BOOL1, OPTIONAL),
+           ("CYC", BOOL1, OPTIONAL),
+           ("recap-rcvd", LIST(UINT8), OPTIONAL),
+           ("recap-rqst-sent", LIST(UINT8), OPTIONAL),
+           ("data", STRING, OPTIONAL),
+           ("sha-256-integrity", STRING)]
+	 ]]></artwork></figure>
+	 </t>
+   </section>
+   <section title="Finite State Machine">
+     <section title="States Diagram">
+		   <t>As you'll notice, the FSM diagram of PEIRC is identical to TCP's. Not shown are the Recaps which can substitue for ACKs while including the timestamps of all other messages received as well. Not included also are retransmissions.</t>
+		   <figure><artwork><![CDATA[
+                    +----------------------------+
+                    | CLOSED |             active|
+                    +-+----^--<----------+   OPEN|
+                      |    |             |    snd|
+          passive OPEN|    |CLOSE        |    SYN|
+                      |    |             |       |
+                    +-v------+           |       |
+                    | LISTEN |      CLOSE|       |
+                    +--+--+--+           |       |
+           rcv SYN     |  |              |       |
++--------+ snd SYN/ACK |  |  snd SYN    ++-------v+
+|        <-------------+  +------------->         |
+|        |                              |         |
+|  SYN   |     rcv SYN / snd ACK        |  SYN    |
+|  RCVD  <------------------------------+  SENT   |
+|        |                              |         |
+|        +-------------+  +-------------+         |
++-+------+   rcv ACK   |  | rcv SYN/ACK +---------+
+  |           of SYN   |  | snd ACK
+  |                 +--v--v--+
+  |CLOSE            | ESTAB  |
+  |snd FIN          +-+----+-+
+  |                   |    |
+  |          CLOSE    |    |    rcv FIN
++-v-------+  snd FIN  |    |    snd ACK +---------+
+|  FIN    <-----------+    +------------>  CLOSE  |
+| WAIT-1  +------------+                |   WAIT  |
++-+-------+            |                +-------+-+
+  | rcv ACK of FIN     |rcv FIN                 |
+  |                    |snd ACK            CLOSE|
+  |                    |                 snd FIN|
++-v-------+          +-v-------+        +-------v-+
+|FINWAIT-2|          | CLOSING |        | LAST-ACK|
++-+-------+          +---------+        +-------+-+
+  |        rcv ACK of FIN |                     |
+  |                       |              rcv ACK|
+  |rcv FIN                | Timeout=2MSL        |
+  |snd ACK           +----v----+        +-------v-+
+  +------------------>TIME WAIT+--------> CLOSED  |
+                     +---------+        +---------+
+       ]]></artwork></figure>
+     </section>
+     <section title="States Details">
+       <t>See RFC 793 for full details.</t>
+     </section>
+   </section>
+   <section title="Security Considerations">
+   <t>By enforcing the communication of excess information, PEIRC facilitates the detection and diagnosis of reliability issues. However this also creates more potential avenues for attacks. PEIRC's goal is not to prevent such attacks, but rather focuses on detecting them and mitigating their effect. Since address spoofing in the Playground network will be particularly easy, the design of PEIRC focused primarily on mechanisms to quickly detect such attacks.</t>
+   </section>
+ </middle>
+
+ <!--  *****BACK MATTER ***** -->
+
+ <back>
+   <!-- References split into informative and normative -->
+
+   <!-- There are 2 ways to insert reference entries from the citation libraries:
+    1. define an ENTITY at the top, and use "ampersand character"RFC2629; here (as shown)
+    2. simply use a PI "less than character"?rfc include="reference.RFC.2119.xml"?> here
+       (for I-Ds: include="reference.I-D.narten-iana-considerations-rfc2434bis.xml")
+
+    Both are cited textually in the same manner: by using xref elements.
+    If you use the PI option, xml2rfc will, by default, try to find included files in the same
+    directory as the including file. You can also define the XML_LIBRARY environment variable
+    with a value containing a set of directories to search.  These can be either in the local
+    filing system or remote ones accessed by http (http://domain/dir/... ).-->
+
+   <references title="Normative References">
+     <!--?rfc include="http://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"?-->
+     &RFC2119;
+     
+     <!--&RFC2360;-->
+     
+   </references>
+
+   <!-- Change Log
+
+
+v00 2016-09-26	FB	Drafted the PEIRC Protocol
+  -->
+ </back>
+</rfc>

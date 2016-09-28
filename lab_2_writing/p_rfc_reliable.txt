@@ -1,0 +1,504 @@
+
+
+
+Network Working Group                                   FB. Barsoum, Ed.
+Request for Comments: 1                   JHU Network Security Fall 2016
+Category: Standards Track                                 September 2016
+
+
+ Playground Request For Comments - Protocol for Excessively Informative
+                 Reliable Communication (PEIRC) (Lab#2)
+
+Abstract
+
+   This Playground RFC describes the Protocol for Excessively
+   Informative Reliable Communication (PEIRC) on the Transport Layer of
+   a network.  PEIRC aims to reduce some of the vulnerabilities,
+   ambiguities, and unreliabilities of TCP by providing extra pieces of
+   information in each message that are used to make congestion control
+   decisions on both ends of a connection, while also helping
+   participants detect and diagnose the source of these issues.
+
+Status of this Memo
+
+   This document specifies a Playgrounds standards track protocol for
+   the Playground Experiment, and requests discussion and suggestions
+   for improvements.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (c) 2016 SETH JAMES NIELSON.  All rights reserved.
+
+   This document is used solely for educational purposes.  Any citations
+   within this document are also for educational purposes and also for
+   technical reference.  If any of these cited elements are protected
+   under copyright, their inclusion here falls under Fair Use
+   provisions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 1]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . . . 3
+   2.  Requirements Language . . . . . . . . . . . . . . . . . . . . . 3
+   3.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+     3.1.  TCP Handshake . . . . . . . . . . . . . . . . . . . . . . . 3
+     3.2.  Message Numbering . . . . . . . . . . . . . . . . . . . . . 3
+     3.3.  2-Way Weighted Congestion Control . . . . . . . . . . . . . 3
+     3.4.  Notifications and Flags . . . . . . . . . . . . . . . . . . 4
+     3.5.  Integrity Hash  . . . . . . . . . . . . . . . . . . . . . . 4
+     3.6.  Recaps and Recap Requests . . . . . . . . . . . . . . . . . 5
+   4.  Message Details . . . . . . . . . . . . . . . . . . . . . . . . 5
+   5.  Finite State Machine  . . . . . . . . . . . . . . . . . . . . . 5
+     5.1.  States Diagram  . . . . . . . . . . . . . . . . . . . . . . 5
+     5.2.  States Details  . . . . . . . . . . . . . . . . . . . . . . 6
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . . . 7
+   7.  Normative References  . . . . . . . . . . . . . . . . . . . . . 7
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . . . 7
+   Intellectual Property and Copyright Statements  . . . . . . . . . . 8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 2]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+1.  Introduction
+
+   Protocol for Excessively Informative Reliable Communication (PEIRC)
+   is a Transport Layer protocol based on TCP which is intended as an
+   overlay over the Playground network.  PEIRC aims to reduce some of
+   the vulnerabilities, ambiguities, and unreliabilities of TCP by
+   providing extra pieces of information that are used to make
+   congestion control decisions on both ends of a connection, while also
+   helping participants detect and diagnose the source of these issues.
+   It uses intelligent timestamps and numbering to maintain order,
+   confirm receipt and integrity of messages, and detect inconsistencies
+   and issues.
+
+
+2.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+
+3.  Overview
+
+   PEIRC is based entirely on TCP except dictionary-type messages are
+   used instead of packets and the following:
+
+3.1.  TCP Handshake
+
+   The TCP handshake is used in PEIRC, with the addition of a timestamp
+   being communicated and recorded by each side.  Details on the use of
+   these timestamps is below.
+
+3.2.  Message Numbering
+
+   Message numbering in PEIRC is replaced with timestamping (described
+   below) such that the numbers are unique, meaning even a
+   retransmission gets a new number.
+
+3.3.  2-Way Weighted Congestion Control
+
+   Each message includes a local UNIX microseconds timestamp of when the
+   message was sent and one for when the receiver's last message was
+   received by the sender.  While timestamps from two endpoints CANNOT
+   be directly compared for many many reasons, keeping a history of
+   these timestamps and how they compare with the previous timestamps
+   and local timestamps can help an endpoint determine the cause of the
+   delays and potentially to detect address spoofing attempts.
+
+
+
+
+Barsoum                      Standards Track                    [Page 3]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+   Congestion control at endpoints uses this awareness of connection
+   issues to intelligiently determine how to throttle connections.  For
+   example, if only one connection is experiencing dropped messages,
+   only that connection is throttled.  On the other hand if all
+   connections are experiencing issues, a global throttling value
+   compensates.
+
+   As a cautionary note, since the integrity hash is calculated and
+   added to the message after the sent-timestamp, the sent-timestamp can
+   be more accurately described as the message-formed-timestamp.
+
+3.4.  Notifications and Flags
+
+   Endpoints can notify each other using certain flags in the message
+   when they detect issues.  The following flags and behaviors MUST be
+   implemented:
+
+   o  NMM - In a spoofed address attempt, when an unsolicited non-SYN
+      message is received from the victim, the receiver notifies the
+      sender that they never initiated this connection by setting the
+      NMM flag, ostensibly along with a request to terminate this
+      connection.
+
+   o  RPT - When a sender retransmits a message, the corresponding RPT
+      flag is set in the message to notify the receiver.
+
+   o  BHR - When a message's calculated hash does not match the one
+      included in the message, the receiver sends back a message with
+      the BHR flag set, inducing the sender to retransmit the message.
+
+   o  CYC - When a receiver notices a discrepancy in the timestamps of
+      the received messages, such as messages jumping around in time or
+      a response being sent supposedly before the request was sent, a
+      message with the CYC flag set is sent to the sender to alert them
+      of the issue.  This may help detect address spoofing attempts.
+
+3.5.  Integrity Hash
+
+   Instead of a basic checksum, PEIRC uses SHA-256 to calculate a hash
+   of the message's contents than can be used to verify its integrity at
+   the receiving endpoint.  (Specifically, the entire message is formed
+   without the hash value, then the hash is calculated and added to the
+   message.  The receiver removes the hash value from the message before
+   calculating it to compare.)
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 4]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+3.6.  Recaps and Recap Requests
+
+   Endpoints can request and send each other Recaps and Recap Requests.
+   Recaps are messages that include a list ("recap-rcvd") of timestamps
+   of correctly received messages within this connection.  They can be
+   sent voluntarily or by request.  Recap Requests themselves include a
+   list ("recap-rqst-sent") of timestamps of messages the sender has
+   sent, including the one of the message the list is sent in and any
+   retransmissions of past timestamps.  Recaps serve to confirm that all
+   sent messages have been received and also help detect anomolies.
+   Voluntary Recaps SHOULD be used often as a form of ACK.
+
+
+4.  Message Details
+
+   PEIRC messages follow the following dictionary-type layout (written
+   here in Python):
+
+   class PEIRCMessage(MessageDefinition):
+     PLAYGROUND_IDENTIFIER = "apps.PERIC.PEIRCMessage"
+     MESSAGE_VERSION = "0.1"
+     BODY = [ ("src-addr", STRING),
+              ("dest-addr", STRING),
+              ("sent-timestamp", UINT8),
+              ("rcvd-timestamp", UINT8, OPTIONAL), #only optional in SYN
+              ("window", UINT2),
+              ("SYN", BOOL1, OPTIONAL),
+              ("ACK", BOOL1, OPTIONAL),
+              ("FIN", BOOL1, OPTIONAL),
+              ("NMM", BOOL1, OPTIONAL),
+              ("RPT", BOOL1, OPTIONAL),
+              ("BHR", BOOL1, OPTIONAL),
+              ("CYC", BOOL1, OPTIONAL),
+              ("recap-rcvd", LIST(UINT8), OPTIONAL),
+              ("recap-rqst-sent", LIST(UINT8), OPTIONAL),
+              ("data", STRING, OPTIONAL),
+              ("sha-256-integrity", STRING)]
+
+
+5.  Finite State Machine
+
+5.1.  States Diagram
+
+   As you'll notice, the FSM diagram of PEIRC is identical to TCP's.
+   Not shown are the Recaps which can substitue for ACKs while including
+   the timestamps of all other messages received as well.  Not included
+   also are retransmissions.
+
+
+
+
+Barsoum                      Standards Track                    [Page 5]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+                       +----------------------------+
+                       | CLOSED |             active|
+                       +-+----^--<----------+   OPEN|
+                         |    |             |    snd|
+             passive OPEN|    |CLOSE        |    SYN|
+                         |    |             |       |
+                       +-v------+           |       |
+                       | LISTEN |      CLOSE|       |
+                       +--+--+--+           |       |
+              rcv SYN     |  |              |       |
+   +--------+ snd SYN/ACK |  |  snd SYN    ++-------v+
+   |        <-------------+  +------------->         |
+   |        |                              |         |
+   |  SYN   |     rcv SYN / snd ACK        |  SYN    |
+   |  RCVD  <------------------------------+  SENT   |
+   |        |                              |         |
+   |        +-------------+  +-------------+         |
+   +-+------+   rcv ACK   |  | rcv SYN/ACK +---------+
+     |           of SYN   |  | snd ACK
+     |                 +--v--v--+
+     |CLOSE            | ESTAB  |
+     |snd FIN          +-+----+-+
+     |                   |    |
+     |          CLOSE    |    |    rcv FIN
+   +-v-------+  snd FIN  |    |    snd ACK +---------+
+   |  FIN    <-----------+    +------------>  CLOSE  |
+   | WAIT-1  +------------+                |   WAIT  |
+   +-+-------+            |                +-------+-+
+     | rcv ACK of FIN     |rcv FIN                 |
+     |                    |snd ACK            CLOSE|
+     |                    |                 snd FIN|
+   +-v-------+          +-v-------+        +-------v-+
+   |FINWAIT-2|          | CLOSING |        | LAST-ACK|
+   +-+-------+          +---------+        +-------+-+
+     |        rcv ACK of FIN |                     |
+     |                       |              rcv ACK|
+     |rcv FIN                | Timeout=2MSL        |
+     |snd ACK           +----v----+        +-------v-+
+     +------------------>TIME WAIT+--------> CLOSED  |
+                        +---------+        +---------+
+
+5.2.  States Details
+
+   See RFC 793 for full details.
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 6]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+6.  Security Considerations
+
+   By enforcing the communication of excess information, PEIRC
+   facilitates the detection and diagnosis of reliability issues.
+   However this also creates more potential avenues for attacks.
+   PEIRC's goal is not to prevent such attacks, but rather focuses on
+   detecting them and mitigating their effect.  Since address spoofing
+   in the Playground network will be particularly easy, the design of
+   PEIRC focused primarily on mechanisms to quickly detect such attacks.
+
+
+7.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/
+              RFC2119, March 1997,
+              <http://www.rfc-editor.org/info/rfc2119>.
+
+
+Author's Address
+
+   Fady Barsoum (editor)
+   JHU Network Security Fall 2016
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 410-497-7384
+   Email: fady.barsoum@jhu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 7]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+Full Copyright Statement
+
+   Copyright (C) Seth James Nielson (2016).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the PLAYGROUND experiment or
+   other associated organizations, except by explicit permission.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by SETH JAMES NIELSON or his successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and SETH JAMES NIELSON and associated academic
+   institutions DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Intellectual Property
+
+   The PLAYGROUND framework and student submissions for PLAYGROUND are
+   intended to be free of any intellectual property conflicts.  All
+   submitting parties, especially students, are not allowed to submit
+   source code, specifications, or other components that are known to be
+   protected by copyright, patents, or other IP mechanisms.  Students
+   submitting creative content grant shared rights and ownership of
+   their content to the PLAYGROUND project.  Specifically, any
+   submission can be used in future educational settings including
+   subsequent PLAYGROUND experiments.
+
+   Any interested party is invited to bring to the experiment director's
+   attention any copyrights, patents or patent applications, or other
+   proprietary rights which may cover technology that may be currently
+   in use without permission.
+
+   It should be noted that these statements have not been reviewed by
+   legal counsel.  Moreover, the academic institutions at which
+   PLAYGROUND experiments take place may have additional or even
+   conflicting copyright and intellectual property rules.  Accordingly,
+   concerned parties may need to contact their own lawyer and/or
+   resources at their institution to understand the rights and
+
+
+
+Barsoum                      Standards Track                    [Page 8]
+
+RFC 1                   PRFC PEIRC Proposal Lab#2         September 2016
+
+
+   limitations associated with code donated to a PLAYGROUND experiment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Barsoum                      Standards Track                    [Page 9]
+
