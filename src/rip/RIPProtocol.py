@@ -1,12 +1,13 @@
 '''
 Implementation of The Reliable Interaction Protocol (RIP)
-as drafted by JHU's Fall 2016 Network Security class's PETF
 Transport Layer on the Playground network
+
+As drafted by JHU's Fall 2016 Network Security class's PETF
 Implemented using Twisted 16.4.1
 
 Author: Fady Barsoum
 Created: 02OCT2016 1:05AM
-Last Modified: 12OCT2016 11:23AM
+Last Modified: 12OCT2016 3:59PM
 '''
 
 import sys
@@ -24,7 +25,7 @@ class RIPMessage(MessageDefinition):
     PLAYGROUND_IDENTIFIER = "RIP.RIPMessage"
     MESSAGE_VERSION = "1.0"
 
-    BODY = [(        "sequence_number", UINT4),
+    BODY = [(        "sequence_number", UINT4         ),
             ( "acknowledgement_number", UINT4,        OPTIONAL),
             (              "signature", STRING,       DEFAULT_VALUE("")),
             (            "certificate", LIST(STRING), OPTIONAL),
@@ -43,12 +44,12 @@ class RIPTransport(StackingTransport):
     def write(self, data):
         ripMessage = RIPMessage()
         ripMessage.data = data
-        self.lowerTransport().write(ptMessage.__serialize__())
+        self.lowerTransport().write(ripMessage.__serialize__())
 
 class RIPProtocol(StackingProtocolMixin, Protocol):
     def __init__(self):
         self.messages = MessageStorage()
-        self.buffer = ""
+        self.fsm = self.RIP_FSM()
 
     def connectionMade(self):
         higherTransport = RIPTransport(self.transport)
@@ -56,15 +57,46 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
     def dataReceived(self,data):
         self.messages.update(data)
-        for message in self.messages.iterateMessages():
-            pass # process the message
+        for msg in self.messages.iterateMessages():
+            if self.validateCerts(msg) and self.checkSignature(msg):
+                if self.notDuplicate(msg):
+                    if msg.sequence_number_notification_flag:
+                        self.fsm.signal("SNN_RECV", msg)
+
+
+    def validateCerts(self,msg):
+        return msg.certificate > 0
+
+    def checkSignature(self,msg):
+        return msg.signature > 0
+
+    def RIP_FSM(self):
+        self.fsm = StateMachine("RIP State Machine")
+        self.fsm.addState("CLOSED", [
+            ("PASSIVE_OPEN","LISTEN"),
+            ("ACTIVE_OPEN", "SNN-SENT")],
+            onEnter = logAndDeconstructFSM)
+        self.fsm.addState("SNN-SENT", [
+            ("CLOSE","CLOSED"),
+            ("RECV_SNN","SNN-RECV")])
+        self.fsm.addState("LISTEN", [
+            ("CLOSE","CLOSED"),
+            ("SEND_SNN", "SNN-SENT"),
+            ("RECV_SNN","SNN-RECV")])
+        self.fsm.addState("SSN-RECV", [
+            ("RECV_AWK_of_SNN","ESTAB")],
+            onEnter = sendAWKofSNN})
+        self.fsm.addState("ESTAB", [
+            ("RECV_RCOVR","SNN-SENT")])
+        return self.fsm
+
+    def sendAWKofSNN(self, signal, data):
+
 
 class RIPFactory(StackingFactoryMixin, Factory):
     protocol = RIPProtocol
-    
-class RIPStateMachine(StateMachine):
-    def __init__(self, initiator):
-        pass
+
+
 	
 ConnectFactory = RIPFactory
 ListenFactory = RIPFactory
