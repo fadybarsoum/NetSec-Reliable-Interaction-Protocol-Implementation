@@ -93,12 +93,10 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         self.retransmit_delay = 0.8
         self.maxRetries = 60
         self.sessionID = "notsetyet"
-        self.myNonce = urandom(8)).encode('hex')
+        self.myNonce = urandom(8).encode('hex')
         
         self.otherCert = None
-        
-    def setCerts(self, certificates):
-        self.certs = certificates
+        self.otherCA = None
         
     def makeConnection(self, transport):
         StackingProtocolMixin.__init__(self)
@@ -114,9 +112,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
             if self.isDuplicate(msg):
                 self.ripPrint("Got a duplicate")
-                continue
-            if not self.validateCerts(msg):
-                self.ripPrint("Certs failed validation")
                 continue
             if not self.checkSignature(msg):
                 self.ripPrint("Signature doesn't match")
@@ -282,7 +277,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         self.ripPrint("Sending Ack")
         msg = RIPMessage()
         msg.sequence_number = self.seqnum
-        self.seqnum += 1
         msg.acknowledgement_flag = True
         msg.acknowledgement_number = self.expectedSeq
         self.lastAckSent = self.expectedSeq - 1
