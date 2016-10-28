@@ -36,7 +36,7 @@ import CertFactory as cf
 
 class RIPMessage(MessageDefinition):
     PLAYGROUND_IDENTIFIER = "RIP.RIPMessage"
-    MESSAGE_VERSION = "1.1"
+    MESSAGE_VERSION = "1.2"
 
     BODY = [("sequence_number", UINT4),
             ("acknowledgement_number", UINT4, OPTIONAL),
@@ -67,7 +67,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         self.messages = MessageStorage()
         self.OBBuffer = "" # outbound buffer, should prbly be a list
         self.fsm = self.RIP_FSM()
-        self.fsm.start("CLOSED")
         self.connected = False
         
         self.seqnum = 0 # gets set later
@@ -101,7 +100,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     def makeConnection(self, transport):
         StackingProtocolMixin.__init__(self)
         self.ripT = RIPTransport(transport, self)
-        self.fsm.signal("SEND_SNN", transport)
 
     def connectionMade(self):
         self.makeHigherConnection(self.ripT)
@@ -165,6 +163,8 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             # we should kill this connection
             self.sentMsgs.pop(msg.sequence_number)
             return
+            
+        msg = self.signMessage(msg)
         # send message
         self.ripT.tSend(msg)
         # callback for retransmit unless it's a non-SNN, non-Close ACK
@@ -176,14 +176,13 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         bufferSize = len(self.OBBuffer)
         while bufferSize > 0:
             bufferSize = len(self.OBBuffer)
-            EoB = min(bufferSize, self.otherMSS)
+            EoB = min(bufferSize, self.MSS)
             dataseg = self.OBBuffer[:EoB]
             self.OBBuffer = self.OBBuffer[EoB:]
             msg = RIPMessage()
             msg.data = dataseg
             msg.sequence_number = self.seqnum
             self.seqnum += len(dataseg)+1
-            msg = self.signMessage(msg)
             msg.sessionID = self.sessionID
             self.sendMessage(msg, self.maxRetries)
     
@@ -227,13 +226,17 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         self.fsm.addState("CLOSE-REQ", 
             ("CLOSE_ACK_RCVD", "CLOSED"),
             onExit = self.shutdown)
+        self.startFSM()
         return self.fsm
+        
+    def startFMS(self): # this gets overwritten by the ServerRIP
+        self.fsm.signal("SEND_SNN")
         
     def connectionEstablished(self, signal, rcvdMsg):
         self.ripPrint("Connection Established")
         self.connectionMade()
         
-    def sendSNN(self, signal, transport):
+    def sendSNN(self, signal):
         self.ripPrint("Sending SNN")
         msg = RIPMessage()
         self.seqnum = unpack('I', urandom(4))[0]
@@ -243,7 +246,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         msg.sequence_number_notification_flag = True
         msg.certificate = [self.myNonce,self.myCert,self.CAcert]
         msg.sessionID = self.sessionID
-        msg = self.signMessage(msg)
         self.sentMsgs[msg.sequence_number] = msg
         self.sendMessage(msg, self.maxRetries)
         
@@ -304,10 +306,15 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     def ripPrint(self, thestr):
         print("[RIP] %s" % thestr)
 
+class RIPServerProtocol(RIPProtocol):
+    def startFSM(self):
+        self.fsm.start("LISTEN")
+
 class RIPFactory(StackingFactoryMixin, Factory):
     protocol = RIPProtocol
 
-
-	
+class RIPServerFactory(RIPFactory):
+	protocol = RIPServerProtocol
+    
 ConnectFactory = RIPFactory
-ListenFactory = RIPFactory
+ListenFactory = RIPServerFactory
