@@ -151,6 +151,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
                         s.connected = True
                         #s.ripPrint("ACK received and updated")
                         s.fsm.signal("ACK_RCVD", msg)
+                        s.expectedSeq += 1
                     else: # this ACK failed the Nonce test
                         continue # toss it (for now)
                 elif msg.sequence_number_notification_flag == True: # this should be an initial SNN
@@ -183,18 +184,18 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         updateFlag = True
         while updateFlag:
             updateFlag = False
-            #s.ripPrint("Looking for expectedSeq # %s in rcvdMsgs (%s)" % (s.expectedSeq,len(s.rcvdMsgs)))
+            s.ripPrint("Looking for expectedSeq # %s in rcvdMsgs (%s)" % (s.expectedSeq,len(s.rcvdMsgs)))
             for prevk in s.rcvdMsgs.keys():
                 prior = s.rcvdMsgs[prevk]
                 # need to add something that will clean up < expected sequence messages
                 if prior.sequence_number == s.expectedSeq:
-                    #s.ripPrint("Found the msg, processing...")
+                    s.ripPrint("Found the msg, processing...")
                     prior = s.rcvdMsgs.pop(prevk, None)
                     updateFlag = True
-                    s.expectedSeq+=max(len(prior.data),1)
+                    s.expectedSeq+=max(len(prior.data),0)
                     if prior.acknowledgement_flag == True:
                         s.lastAckRcvd = max(s.lastAckRcvd, prior.acknowledgement_number)
-                        #s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
+                        s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
                     else:
                         s.sendAck(prior)
                     #if len(prior.data) > 0:
@@ -208,7 +209,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     
     def sendMessage(s, msg, triesLeft):
         # checks to see if the message should be sent
-        #s.ripPrint("Want to send # %s  Last ACK Rcvd: %s" % (msg.sequence_number, s.lastAckRcvd))
+        s.ripPrint("Want to send # %s  Last ACK Rcvd: %s" % (msg.sequence_number, s.lastAckRcvd))
         #msg.printMessageNicely()
         if msg.sequence_number < s.lastAckRcvd:
             if not (msg.acknowledgement_flag == True and ("UNSET" in str(msg.sequence_number_notification_flag) or msg.sequence_number_notification_flag == False)):
@@ -233,8 +234,11 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     
     def processOut(s, data):
         s.OBBuffer += data
+        s.sendDataOut()
+
+    def sendDataOut(s): # recursively sends data with delays to prevent blocking
         bufferSize = len(s.OBBuffer)
-        while bufferSize > 0:
+        if bufferSize > 0:
             EoB = min(bufferSize, s.MSS)
             dataseg = s.OBBuffer[:EoB]
             s.OBBuffer = s.OBBuffer[EoB:]
@@ -245,7 +249,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             msg.sessionID = s.sessionID
             s.sentMsgs[msg.sequence_number] = msg
             s.sendMessage(msg, s.maxAttempts)
-            bufferSize = len(s.OBBuffer)
+            s.deferreds.append( deferLater(reactor, .015, s.sendDataOut) )
     
     def isDuplicate(s, msg):
         # should check if the message has already been seen
@@ -373,17 +377,14 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             msg.certificate = [s.myNonce] + msg.certificate
             msg.certificate = msg.certificate + [s.myCert] + [s.CAcert]
             s.otherCerts = rcvdMsg.certificate[1:]
-            retries = s.maxAttempts
             s.sentMsgs[msg.sequence_number] = msg
-            msg.sequence_number = s.seqnum
-            s.seqnum += 1
         else: # we got an SNN+ACK so send just an ACK of SNN (client)
             s.otherCerts = rcvdMsg.certificate[2:]
-            retries = 1
             s.lastAckRcvd = max(s.lastAckRcvd, rcvdMsg.acknowledgement_number)
             s.ripPrint("ACK of SNN received. Last ACK# %d" % (s.lastAckRcvd))
             s.connected = True
-            msg.sequence_number = s.seqnum-1
+        msg.sequence_number = s.seqnum
+        s.seqnum += 1
         s.expectedSeq = msg.acknowledgement_number
         s.lastAckSent = msg.acknowledgement_number
         s.sessionID = str(s.myNonce) + rcvdMsg.certificate[0]
@@ -393,7 +394,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     def sendAck(s, rcvd):
         #s.ripPrint("Sending Ack")
         msg = RIPMessage()
-        msg.sequence_number = s.seqnum-1
+        msg.sequence_number = s.seqnum
         msg.acknowledgement_flag = True
         msg.acknowledgement_number = rcvd.sequence_number + len(rcvd.data)
         s.lastAckSent = msg.acknowledgement_number
