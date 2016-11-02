@@ -83,12 +83,14 @@ class RIPTransport(StackingTransport):
 class RIPProtocol(StackingProtocolMixin, Protocol):
     def __init__(s):
         s.debug = False
-        s.errordebug = False
+        s.errordebug = True
 
         s.messages = MessageStorage()
         s.OBBuffer = "" # outbound buffer, should prbly be a list
         s.fsm = s.RIP_FSM()
         s.connected = False
+        s.sendClose = False # flag to indicate sending loop should send a close
+        s.closeRcvd = False
         s.shuttingDown = False
         
         s.seqnum = 0 # gets set later but this should be the sequence of the next new packet
@@ -101,8 +103,8 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.deferreds = list() # so we can disable them when shutting down
         
         s.MSS = 2048 # fixed
-        s.transmitDelay = 0.01
-        s.retransmit_delay = 1.5
+        s.transmitDelay = 0.02
+        s.retransmit_delay = 3
         s.maxAttempts = 256 
         s.sessionID = "" # gets set after nonces are exchanged
         s.myNonce = urandom(8).encode('hex') # random hex nonce
@@ -111,7 +113,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
         s.otherCerts = None # store the other certs here
 
-        s.ripPrintError("RIPProtocol Initialized")
+        s.ripPrint("RIPProtocol Initialized")
         
     def makeConnection(s, transport):
         StackingProtocolMixin.__init__(s)
@@ -140,73 +142,84 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
     # Checks then routes the incoming message to the appropriate parser
     def dataReceived(s,data):
-        s.messages.update(data)
-        for msg in s.messages.iterateMessages():
-            s.ripPrint("Received #" + str(msg.sequence_number) + " ACK# " + str(msg.acknowledgement_number))
-            if s.isDuplicate(msg):
-                #s.ripPrintError("Got a duplicate non-ACK message")
-                continue # discard this message
-            if not s.checkSignature(msg):
-                #s.ripPrintError("Signature doesn't match/certs invalid")
-                continue # discard this message
-            #try:
-            if not s.connected: # there must be an FSM way to do this...
-                if msg.acknowledgement_flag == True: # is this an ACK of a SNN
-                    if msg.sequence_number_notification_flag == True: # and an SNN
-                        if "UNSET" not in str(msg.certificate) and int(msg.certificate[1],16) == int(s.myNonce,16)+1: # Check nonce
-                            #s.ripPrint("ACK received and updated")
-                            s.fsm.signal("RECV_SNN_ACK", msg)
-                        else: # it failed the Nonce Check
-                            continue # toss it (for now)
-                    elif "UNSET" not in str(msg.certificate) and int(msg.certificate[0],16) == int(s.myNonce,16)+1: # this should be just an ACK of an SNN
-                        s.connected = True
-                        #s.ripPrint("ACK received and updated")
-                        s.fsm.signal("ACK_RCVD", msg)
-                        s.expectedSeq += 1
-                    else: # this ACK failed the Nonce test
-                        continue # toss it (for now)
-                elif msg.sequence_number_notification_flag == True: # this should be an initial SNN
-                    s.fsm.signal("RECV_SNN", msg)
-                else: # we're not connected and we didn't get an SNN nor ACK of SNN
-                    # we might want to keep this message for later processing but the safest option is to discard it:
+        try:
+            s.messages.update(data)
+        except:
+            s.ripPrintError("MessageStorage update failure")
+            # should I reinstntiate?
+        try:
+            for msg in s.messages.iterateMessages():
+                s.ripPrint("Received #" + str(msg.sequence_number) + " ACK# " + str(msg.acknowledgement_number))
+                if s.isDuplicate(msg):
+                    #s.ripPrintError("Got a duplicate non-ACK message")
                     continue # discard this message
-            
-            else: # we're already connected
-                # Check if an SNN is received (error) and (for now) kill the connection 
-                if msg.sequence_number_notification_flag == True:
-                    s.fsm.signal("RECV_SNN_AFTER_ESTAB", msg)
-                    return
-                s.processDataIn(msg)
+                if not s.checkSignature(msg):
+                    #s.ripPrintError("Signature doesn't match/certs invalid")
+                    continue # discard this message
+                #try:
+                if not s.connected: # there must be an FSM way to do this...
+                    if msg.acknowledgement_flag == True: # is this an ACK of a SNN
+                        if msg.sequence_number_notification_flag == True: # and an SNN
+                            if "UNSET" not in str(msg.certificate) and int(msg.certificate[1],16) == int(s.myNonce,16)+1: # Check nonce
+                                #s.ripPrint("ACK received and updated")
+                                s.fsm.signal("RECV_SNN_ACK", msg)
+                            else: # it failed the Nonce Check
+                                continue # toss it (for now)
+                        elif "UNSET" not in str(msg.certificate) and int(msg.certificate[0],16) == int(s.myNonce,16)+1: # this should be just an ACK of an SNN
+                            s.connected = True
+                            #s.ripPrint("ACK received and updated")
+                            s.fsm.signal("ACK_RCVD", msg)
+                            s.expectedSeq += 1
+                        else: # this ACK failed the Nonce test
+                            continue # toss it (for now)
+                    elif msg.sequence_number_notification_flag == True: # this should be an initial SNN
+                        s.fsm.signal("RECV_SNN", msg)
+                    else: # we're not connected and we didn't get an SNN nor ACK of SNN
+                        # we might want to keep this message for later processing but the safest option is to discard it:
+                        continue # discard this message
+                
+                else: # we're already connected
+                    # Check if an SNN is received (error) and (for now) kill the connection 
+                    if msg.sequence_number_notification_flag == True:
+                        s.fsm.signal("RECV_SNN_AFTER_ESTAB", msg)
+                        return
+                    s.processDataIn(msg)
+        except: s.ripPrintError("Error redirecting incoming message")
             
     def processDataIn(s, msg):
-    #try:
-        #  Process ACK
-        if msg.acknowledgement_flag == True:
-            s.lastAckRcvd = max(s.lastAckRcvd, msg.acknowledgement_number)
-            s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
-            if s.fsm.currentState() == "CLOSE-RQSTD" and s.lastAckRcvd == s.seqnum:
-                s.fsm.signal("CLOSE_ACK_RCVD")
-            return
-        #s.ripPrint("Processing data in")
-        s.rcvdMsgs[msg.sequence_number] = msg
-        updateFlag = True
-        while updateFlag:
-            updateFlag = False
-            #s.ripPrint("Looking for expectedSeq # %s in rcvdMsgs (%s)" % (s.expectedSeq,len(s.rcvdMsgs)))
-            for prevk in s.rcvdMsgs.keys():
-                prior = s.rcvdMsgs[prevk]
-                # need to add something that will clean up < expected sequence messages
-                if prior.sequence_number == s.expectedSeq:
-                    #s.ripPrint("Found the msg, processing...")
-                    prior = s.rcvdMsgs.pop(prevk, None)
-                    updateFlag = True
-                    #if len(prior.data) > 0:
-                    s.higherProtocol() and s.higherProtocol().dataReceived(prior.data)
-                    if prior.close_flag == True:
-                        s.fsm.signal("RECV_CLOSE", prior)
-                    s.expectedSeq+=max(len(prior.data),0)
-                    s.sendAck(prior)
-    #except: s.ripPrintError("Error with transferring data up")
+        try:
+            #  Process ACK
+            if msg.acknowledgement_flag == True:
+                s.lastAckRcvd = max(s.lastAckRcvd, msg.acknowledgement_number)
+                s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
+                if s.fsm.currentState() == "CLOSE-RQSTD" and s.lastAckRcvd == s.seqnum:
+                    s.fsm.signal("CLOSE_ACK_RCVD")
+                return
+            #s.ripPrint("Processing data in")
+            s.rcvdMsgs[msg.sequence_number] = msg
+            updateFlag = True
+            while updateFlag:
+                updateFlag = False
+                #s.ripPrint("Looking for expectedSeq # %s in rcvdMsgs (%s)" % (s.expectedSeq,len(s.rcvdMsgs)))
+                for prevk in s.rcvdMsgs.keys():
+                    prior = s.rcvdMsgs[prevk]
+                    # need to add something that will clean up < expected sequence messages
+                    if prior.sequence_number == s.expectedSeq:
+                        #s.ripPrint("Found the msg, processing...")
+                        prior = s.rcvdMsgs.pop(prevk, None)
+                        updateFlag = True
+                        #if len(prior.data) > 0:
+                        s.higherProtocol() and s.higherProtocol().dataReceived(prior.data)
+                        s.expectedSeq+=max(len(prior.data),0)
+                        if prior.close_flag == True:
+                            s.fsm.signal("RECV_CLOSE", prior)
+                        else:
+                            s.sendAck(prior)
+                    elif prior.sequence_number < s.expectedSeq:
+                        s.ripPrint("Found an older message??? Removing it....")
+                        prior = s.rcvdMsgs.pop(prevk, None)
+                        updateFlag = True
+        except: s.ripPrintError("Error with processing incoming message")
     
     def sendMessage(s, msg, triesLeft):
         # checks to see if the message should be sent
@@ -235,7 +248,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             s.deferreds.append( deferLater(reactor, s.retransmit_delay, s.sendMessage, msg, triesLeft-1) )
     
     def processOut(s, data):
-        s.ripPrintError("Data length to send: %s" % len(data))
         s.OBBuffer += data
 
     def sendDataOut(s): # recursively sends data with delays to prevent blocking
@@ -244,7 +256,6 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             EoB = min(bufferSize, s.MSS)
             dataseg = s.OBBuffer[:EoB]
             s.OBBuffer = s.OBBuffer[EoB:]
-            s.ripPrintError("Outbound buffer left: %s" % len(s.OBBuffer))
             msg = RIPMessage()
             msg.data = dataseg
             msg.sequence_number = s.seqnum
@@ -252,19 +263,24 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             msg.sessionID = s.sessionID
             s.sentMsgs[msg.sequence_number] = msg
             s.sendMessage(msg, s.maxAttempts)
-        deferLater(reactor, s.transmitDelay, s.sendDataOut)
+            if len(s.OBBuffer) == 0:
+                s.ripPrint("Outbound buffer finished")
+        else:
+            if s.sendClose == True:
+                s.waitForAcksThenSendClose()
+        s.deferreds.append( deferLater(reactor, s.transmitDelay, s.sendDataOut) )
     
     def isDuplicate(s, msg):
         # should check if the message has already been seen
         if msg.acknowledgement_flag == True:
-            #s.ripPrint("isDuplicate: Letting ACK through")
+            ###s.ripPrint("isDuplicate: Letting ACK through")
             return False
         if msg.sequence_number < s.lastAckSent:
             s.ripPrintError("Received #%s but last Ack sent #%s" % (msg.sequence_number, s.lastAckSent))
             s.sendAck(None)
             return True
         if msg.sequence_number in s.rcvdMsgs.keys():
-            s.ripPrintError("Received #%s but already in rcvdMsgs" % msg.sequence_number)
+            ###s.ripPrintError("Received #%s but already in rcvdMsgs (%s)" % (msg.sequence_number,len(s.rcvdMsgs)))
             return True
         return False
         
@@ -286,26 +302,30 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
     def checkSignature(s,msg):
         # if this is an SNN, validate the certificates and save them first, then check the signature
-        if msg.sequence_number_notification_flag == True: #certs are in the message
-            # we need to be able to deal with multiple 
-            if len(msg.certificate) == 3: i = 1
-            else: i = 2
-            certs = [X509Certificate.loadPEM(certF) for certF in msg.certificate[i:]]
-            if not s.certsValid(certs):
-                s.ripPrintError("Certs failed validation")
-                return False
-        else:
-            certs = [X509Certificate.loadPEM(certF) for certF in s.otherCerts]
+        try:
+            if msg.sequence_number_notification_flag == True: #certs are in the message
+                # we need to be able to deal with multiple 
+                if len(msg.certificate) == 3: i = 1
+                else: i = 2
+                certs = [X509Certificate.loadPEM(certF) for certF in msg.certificate[i:]]
+                if not s.certsValid(certs):
+                    s.ripPrintError("Certs failed validation")
+                    return False
+            else:
+                certs = [X509Certificate.loadPEM(certF) for certF in s.otherCerts]
 
-        signature = msg.signature
-        msg.signature = ""
-        otherPubK = RSA.importKey(certs[0].getPublicKeyBlob())
-        rsaVerifier = PKCS1_v1_5.new(otherPubK)
-        hasher = SHA256.new()
-        hasher.update(msg.__serialize__())
-        result = rsaVerifier.verify(hasher, signature)
-        if not result: s.ripPrintError("Signature incorrect")
-        return result
+            signature = msg.signature
+            msg.signature = ""
+            otherPubK = RSA.importKey(certs[0].getPublicKeyBlob())
+            rsaVerifier = PKCS1_v1_5.new(otherPubK)
+            hasher = SHA256.new()
+            hasher.update(msg.__serialize__())
+            result = rsaVerifier.verify(hasher, signature)
+            if not result: s.ripPrintError("Signature incorrect")
+            return result
+        except:
+            s.ripPrintError("Error checking signature. Assuming failed")
+            return False
 
     def RIP_FSM(s):
         s.fsm = StateMachine("RIP State Machine")
@@ -337,6 +357,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             onExit = s.sendCloseReqAckAndShutdown)
         s.fsm.addState("CLOSE-RQSTD", 
             ("CLOSE_ACK_RCVD", "CLOSED"),
+            ("TIMEOUT_CLOSE_ACK", "CLOSED"),
             onEnter = s.sendCloseReq,
             onExit = s.shutdown)
         s.fsm.addState("ERROR-STATE", onEnter = s.killConnection)
@@ -407,56 +428,73 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         msg.sessionID = s.sessionID
         s.sendMessage(msg, 1)
         
-    def logAndDeconstructFSM(s,signal):
-        pass
-        
     def finishThenExit(s,signal,rcvd):
+        s.closeRcvd = True
         s.shuttingDown = True
-        if len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum:
+        if len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum or len(s.rcvdMsgs) > 0:
+            s.ripPrintError("Waiting for finish")
             s.deferreds.append(deferLater(reactor, .2, s.finishThenExit, signal, rcvd))
         else:
+            s.ripPrintError("Finished. Sending Close ACK")
             s.fsm.signal("CLOSE_ACK_SENT", rcvd)
         
     def sendCloseReqAckAndShutdown(s,signal,rcvd):
+        s.ripPrintError("Sending close ACK")
         s.sendAck(rcvd)
         s.shutdown("Close ACK sent. Closing now")
     
-    def shutdown(s, signal):
-        s.ripPrintError("\033[91mShutting down signal: %s \033[0m" % signal)
+    def shutdown(s, signal, msg):
+        s.ripPrintError("\033[91mShutting down: %s \033[0m" % signal)
         for d in s.deferreds:
             d.cancel()
-        s.ripPrintError("Shut down complete!")
-        s.higherProtocol().connectionLost()
+        try:
+            s.higherProtocol().connectionLost()
+        except: s.ripPrintError("Shutdown unable to call higher protocol")
+        s.ripPrint("Shut down complete!")
 
     def killConnection(s, signal, _ignore):
         #s.connectionLost("Kill command")
         pass
 
     def loseConnection(s):
-        if not s.shuttingDown:
-            s.shuttingDown = True
-            s.ripPrintError("Closing: loseConnection called")
-            s.fsm.signal("CLOSE_SENT", None)
+        s.ripPrintError("Lose Connection called")
+        s.higherProtocol().connectionLost()
+        if not s.closeRcvd:
+            s.sendClose = True
 
     def connectionLost(s, reason):
-        # called when connection is lost
-        #s.shutdown("Connection Lost")
-        s.loseConnection()
+        # called when connection is lost, should keep processing
+        if len(s.rcvdMsgs) > 0:
+            s.ripPrintError("connectionLost but still processing (%s rcvdMsgs)" % len(s.rcvdMsgs))
+            s.deferreds.append(deferLater(reactor, .2, s.connectionLost, reason))
+        else:
+            s.ripPrintError("connectionLost: calling shutdown()")
+            s.shutdown(reason, None)
 
     def close(s):
+        s.ripPrintError("Recevied Close command")
         s.loseConnection()
 
-    def sendCloseReq(s,signal, _ignore):
+    def waitForAcksThenSendClose(s):
         if len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum:
-            s.deferreds.append(deferLater(reactor, .2, s.loseConnection))
+            s.ripPrintError("Waiting for ACKs before sending close...")
+            s.deferreds.append(deferLater(reactor, .2, s.waitForAcksThenSendClose))
         else:
-            msg = RIPMessage()
-            msg.sequence_number = s.seqnum
-            s.seqnum += 1
-            msg.close_flag = True
-            msg.sessionID = s.sessionID
-            s.sendMessage(msg, s.maxAttempts)
-            s.deferreds.append( deferLater(reactor, 120, s.shutdown, "No response to Close Req") )
+            s.ripPrintError("All ACKs received. Sending Close")
+            s.fsm.signal("CLOSE_SENT", None)
+
+    def sendCloseReq(s,signal, _ignore):
+        s.ripPrintError("Sending close request")
+        msg = RIPMessage()
+        msg.sequence_number = s.seqnum
+        s.seqnum += 1
+        msg.close_flag = True
+        msg.sessionID = s.sessionID
+        s.sendMessage(msg, s.maxAttempts)
+        s.deferreds.append( deferLater(reactor, 120, s.fsm.signal, "TIMEOUT_CLOSE_ACK", None) )
+
+    def isNotDone(s): # checks if msgs still need to be sent, confirmed, or rcvd
+        return  len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum
 
     def signMessage(s, msg):
         msg.signature = ""
