@@ -1,0 +1,354 @@
+2016-11-01 03:51:22,475 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 9324
+2016-11-01 03:51:22,476 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 03:51:22,476 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 03:51:22,477 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 03:51:22,477 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3959662358 for srcPort 13370
+2016-11-01 03:51:22,478 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 03:51:22,479 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 03:51:26,912 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 31220
+2016-11-01 03:51:26,936 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 03:51:26,937 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 03:51:26,937 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 03:51:26,937 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 2909545583 for srcPort 13370
+2016-11-01 03:51:26,987 - root - ERROR - [ERROR(Regular) <class 'playground.twisted.endpoints.GateEndpoint.GateServerEndpoint'>.gateerr::180 -> ROOT/Default Logging Error Handler ]
+[DETAILS]
+Gate reported error [Failure instance: Traceback (failure with no frames): <class 'playground.twisted.error.Failure.SimpleFailureException'>: Gate reported error msg: Port already in use
+]
+	Associated Trace:   File "echotest2.py", line 253, in <module>
+    reactor.run()
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/base.py", line 1195, in run
+    self.mainLoop()
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/base.py", line 1207, in mainLoop
+    self.doIteration(t)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/epollreactor.py", line 396, in doPoll
+    log.callWithLogger(selectable, _drdw, selectable, fd, event)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/python/log.py", line 101, in callWithLogger
+    return callWithContext({"system": lp}, func, *args, **kw)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/python/log.py", line 84, in callWithContext
+    return context.call({ILogContext: newCtx}, func, *args, **kw)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/python/context.py", line 118, in callWithContext
+    return self.currentContext().callWithContext(ctx, func, *args, **kw)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/python/context.py", line 81, in callWithContext
+    return func(*args,**kw)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/posixbase.py", line 597, in _doReadOrWrite
+    why = selectable.doRead()
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/tcp.py", line 208, in doRead
+    return self._dataReceived(data)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/tcp.py", line 214, in _dataReceived
+    rval = self.protocol.dataReceived(data)
+  File "/usr/local/lib/python2.7/dist-packages/twisted/internet/endpoints.py", line 115, in dataReceived
+    return self._wrappedProtocol.dataReceived(data)
+  File "/home/fady/Documents/PlayGround/secondtest/src/playground/twisted/endpoints/GateEndpoint.py", line 412, in dataReceived
+    self.__handleG2gResponse(g2gMessage)
+  File "/home/fady/Documents/PlayGround/secondtest/src/playground/twisted/endpoints/GateEndpoint.py", line 416, in __handleG2gResponse
+    self.__handleG2gResvListen(g2gMessage)
+  File "/home/fady/Documents/PlayGround/secondtest/src/playground/twisted/endpoints/GateEndpoint.py", line 444, in __handleG2gResvListen
+    self.__listenLookup[resvId].gateerr(Failure(error))
+  File "/home/fady/Documents/PlayGround/secondtest/src/playground/twisted/endpoints/GateEndpoint.py", line 180, in gateerr
+    errReporter.error("Gate reported error %s" % failure)
+
+
+2016-11-01 03:51:26,988 - __main__ - ERROR - [Failure instance: Traceback (failure with no frames): <class 'playground.twisted.error.Failure.SimpleFailureException'>: Gate reported error msg: Port already in use
+]
+2016-11-01 03:51:50,270 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 37466)
+2016-11-01 03:51:50,270 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fcf9a8e9fd0> created and connected to TCP port 37466, but not yet initialized with gate data
+2016-11-01 03:51:50,271 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 03:51:50,272 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 03:51:50,272 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fcf9a8e9fd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 03:51:50,272 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 9324>
+2016-11-01 03:51:50,295 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 03:51:50,327 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7fcf9a691690))
+2016-11-01 03:51:50,328 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 03:51:50,328 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 03:51:50,416 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7fcf9a5ac910))
+2016-11-01 03:51:50,416 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 03:51:50,416 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 03:51:56,763 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 03:55:17,706 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 23224
+2016-11-01 03:55:17,707 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 03:55:17,707 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 03:55:17,708 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 03:55:17,708 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 2326231112 for srcPort 13370
+2016-11-01 03:55:17,710 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 03:55:17,710 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 03:55:42,273 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 33574)
+2016-11-01 03:55:42,274 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f6e3f355fd0> created and connected to TCP port 33574, but not yet initialized with gate data
+2016-11-01 03:55:42,274 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 03:55:42,275 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 03:55:42,275 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f6e3f355fd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 03:55:42,275 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 23224>
+2016-11-01 03:55:42,289 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 03:55:42,339 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f6e3f0fd410))
+2016-11-01 03:55:42,339 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 03:55:42,340 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 03:55:42,414 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f6e3f0fd490))
+2016-11-01 03:55:42,414 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 03:55:42,414 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 03:55:44,925 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 03:56:25,149 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 22317
+2016-11-01 03:56:25,150 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 03:56:25,151 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 03:56:25,151 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 03:56:25,151 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 380779701 for srcPort 13370
+2016-11-01 03:56:25,152 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 03:56:25,152 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 03:56:26,811 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 37296)
+2016-11-01 03:56:26,811 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7ffb2d0ecfd0> created and connected to TCP port 37296, but not yet initialized with gate data
+2016-11-01 03:56:26,812 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 03:56:26,812 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 03:56:26,812 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7ffb2d0ecfd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 03:56:26,812 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 22317>
+2016-11-01 03:56:26,830 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 03:56:26,865 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7ffb2ce94690))
+2016-11-01 03:56:26,871 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 03:56:26,871 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 03:56:26,951 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7ffb2cdb0910))
+2016-11-01 03:56:26,951 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 03:56:26,951 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 03:56:28,132 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:04:34,909 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 31679
+2016-11-01 04:04:34,910 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:04:34,912 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:04:34,912 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:04:34,912 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 2433872672 for srcPort 13370
+2016-11-01 04:04:34,913 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:04:34,914 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:04:36,765 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 41960)
+2016-11-01 04:04:36,765 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fa3c40a8390> created and connected to TCP port 41960, but not yet initialized with gate data
+2016-11-01 04:04:36,766 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:04:36,767 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:04:36,767 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fa3c40a8390> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:04:36,768 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 31679>
+2016-11-01 04:04:36,796 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:04:36,817 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7fa3c3e50450))
+2016-11-01 04:04:36,817 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:04:36,817 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:04:36,927 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7fa3c3e50510))
+2016-11-01 04:04:36,927 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:04:36,927 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:04:38,808 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:05:57,838 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 26615
+2016-11-01 04:05:57,838 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:05:57,839 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:05:57,839 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:05:57,839 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 23959374 for srcPort 13370
+2016-11-01 04:05:57,841 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:05:57,841 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:05:59,569 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 45056)
+2016-11-01 04:05:59,569 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f7c1919b390> created and connected to TCP port 45056, but not yet initialized with gate data
+2016-11-01 04:05:59,569 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:05:59,570 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:05:59,571 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f7c1919b390> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:05:59,571 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 26615>
+2016-11-01 04:05:59,589 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:05:59,613 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f7c18f436d0))
+2016-11-01 04:05:59,613 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:05:59,613 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:05:59,721 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f7c18e5e950))
+2016-11-01 04:05:59,721 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:05:59,721 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:06:00,959 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:06:17,660 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 22777
+2016-11-01 04:06:17,661 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:06:17,662 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:06:17,662 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:06:17,662 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 4185785394 for srcPort 13370
+2016-11-01 04:06:17,664 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:06:17,664 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:06:19,376 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 60638)
+2016-11-01 04:06:19,376 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fe2a70d5390> created and connected to TCP port 60638, but not yet initialized with gate data
+2016-11-01 04:06:19,377 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:06:19,377 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:06:19,377 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fe2a70d5390> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:06:19,378 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 22777>
+2016-11-01 04:06:19,393 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:06:19,415 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7fe2a6e7d6d0))
+2016-11-01 04:06:19,415 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:06:19,415 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:06:19,502 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7fe2a6d98950))
+2016-11-01 04:06:19,503 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:06:19,503 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:06:20,414 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:09:46,012 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 18981
+2016-11-01 04:09:46,013 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:09:46,014 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:09:46,014 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:09:46,014 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 2395766846 for srcPort 13370
+2016-11-01 04:09:46,015 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:09:46,015 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:09:47,953 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 60002)
+2016-11-01 04:09:47,953 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f9df14ff390> created and connected to TCP port 60002, but not yet initialized with gate data
+2016-11-01 04:09:47,953 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:09:47,954 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:09:47,954 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f9df14ff390> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:09:47,954 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 18981>
+2016-11-01 04:09:47,970 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:09:47,999 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f9df12a76d0))
+2016-11-01 04:09:47,999 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:09:47,999 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:09:48,080 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f9df12a75d0))
+2016-11-01 04:09:48,080 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:09:48,080 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:09:49,080 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:13:34,891 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 15881
+2016-11-01 04:13:34,892 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:13:34,893 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:13:34,893 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:13:34,893 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3725900403 for srcPort 13370
+2016-11-01 04:13:34,894 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:13:34,895 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:13:36,920 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 53036)
+2016-11-01 04:13:36,920 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fa9f837c3d0> created and connected to TCP port 53036, but not yet initialized with gate data
+2016-11-01 04:13:36,921 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:13:36,921 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:13:36,921 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fa9f837c3d0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:13:36,921 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 15881>
+2016-11-01 04:13:36,935 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:13:36,962 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <type 'exceptions.AttributeError'>: 'RIPServerProtocol' object has no attribute 'ripPrintErrot'
+]
+2016-11-01 04:13:47,357 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 28589
+2016-11-01 04:13:47,358 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:13:47,359 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:13:47,359 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:13:47,359 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3137026856 for srcPort 13370
+2016-11-01 04:13:47,361 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:13:47,361 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:13:48,977 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 49608)
+2016-11-01 04:13:48,977 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fc6fd6743d0> created and connected to TCP port 49608, but not yet initialized with gate data
+2016-11-01 04:13:48,978 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:13:48,978 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:13:48,978 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fc6fd6743d0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:13:48,978 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 28589>
+2016-11-01 04:13:48,999 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:13:49,026 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7fc6fd41c710))
+2016-11-01 04:13:49,027 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:13:49,027 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:13:49,118 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7fc6fd41c610))
+2016-11-01 04:13:49,118 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:13:49,118 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:13:50,885 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:15:27,682 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 11213
+2016-11-01 04:15:27,683 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:15:27,684 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:15:27,684 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:15:27,684 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3622769090 for srcPort 13370
+2016-11-01 04:15:27,686 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:15:27,686 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:15:29,780 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 34970)
+2016-11-01 04:15:29,780 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f732a813390> created and connected to TCP port 34970, but not yet initialized with gate data
+2016-11-01 04:15:29,781 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:15:29,781 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:15:29,782 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f732a813390> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:15:29,782 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 11213>
+2016-11-01 04:15:29,815 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:15:29,851 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f732a5bb6d0))
+2016-11-01 04:15:29,852 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:15:29,854 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:15:29,964 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f732a4d5850))
+2016-11-01 04:15:29,964 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:15:29,964 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:15:45,550 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:20:45,821 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 20434
+2016-11-01 04:20:45,821 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:20:45,822 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:20:45,822 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:20:45,822 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3991669929 for srcPort 13370
+2016-11-01 04:20:45,824 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:20:45,824 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:21:29,272 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 18828
+2016-11-01 04:21:29,273 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:21:29,274 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:21:29,274 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:21:29,274 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 3668062896 for srcPort 13370
+2016-11-01 04:21:29,276 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:21:29,276 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:21:30,993 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 43060)
+2016-11-01 04:21:30,993 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fe965460fd0> created and connected to TCP port 43060, but not yet initialized with gate data
+2016-11-01 04:21:30,993 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:21:30,994 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:21:30,994 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7fe965460fd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:21:30,994 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 18828>
+2016-11-01 04:21:31,018 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:21:31,062 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7fe965208410))
+2016-11-01 04:21:31,062 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:21:31,062 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:21:31,191 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7fe9652084d0))
+2016-11-01 04:21:31,191 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:21:31,191 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:21:33,562 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:24:45,925 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 19839
+2016-11-01 04:24:45,925 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:24:45,926 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:24:45,926 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:24:45,926 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 2549086778 for srcPort 13370
+2016-11-01 04:24:45,928 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:24:45,928 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:24:48,053 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 51674)
+2016-11-01 04:24:48,053 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f07fd4e9fd0> created and connected to TCP port 51674, but not yet initialized with gate data
+2016-11-01 04:24:48,054 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:24:48,054 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:24:48,054 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f07fd4e9fd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:24:48,055 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 19839>
+2016-11-01 04:24:48,072 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:24:48,104 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f07fd291690))
+2016-11-01 04:24:48,104 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:24:48,104 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:24:48,196 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f07fd291590))
+2016-11-01 04:24:48,196 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:24:48,196 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:29:32,168 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:29:49,659 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 9636
+2016-11-01 04:29:49,659 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:29:49,660 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:29:49,660 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:29:49,661 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 323668976 for srcPort 13370
+2016-11-01 04:29:49,662 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:29:49,662 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:29:51,512 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 41834)
+2016-11-01 04:29:51,513 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f5fac417fd0> created and connected to TCP port 41834, but not yet initialized with gate data
+2016-11-01 04:29:51,513 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:29:51,514 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:29:51,514 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f5fac417fd0> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:29:51,514 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 9636>
+2016-11-01 04:29:51,532 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:29:51,553 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f5fac1bf410))
+2016-11-01 04:29:51,553 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:29:51,553 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:29:51,616 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f5fac0d9910))
+2016-11-01 04:29:51,616 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:29:51,616 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:30:47,434 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2016-11-01 04:30:49,613 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connecting to gate 127.0.0.1 19091 with callback port 19523
+2016-11-01 04:30:49,614 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Starting outbound connection to gate.
+2016-11-01 04:30:49,615 - playground.twisted.endpoints.GateEndpoint.GateService - INFO - Connection to Gate established.
+2016-11-01 04:30:49,615 - GateServerEndpoint.listener_13370 - INFO - Gate connection complete.
+2016-11-01 04:30:49,615 - playground.twisted.endpoints.GateEndpoint - INFO - Sending G2G port reservation to gate with ID 1512225781 for srcPort 13370
+2016-11-01 04:30:49,617 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Reservation
+2016-11-01 04:30:49,617 - GateServerEndpoint.listener_13370 - INFO - Now listening on 20164.1.1337.5001:13370
+2016-11-01 04:30:51,647 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection made to IPv4Address(TCP, '127.0.0.1', 57116)
+2016-11-01 04:30:51,647 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f381a398310> created and connected to TCP port 57116, but not yet initialized with gate data
+2016-11-01 04:30:51,647 - GateServerEndpoint.listener_13370 - INFO - Received response from gate of type Spawn
+2016-11-01 04:30:51,648 - GateServerEndpoint.listener_13370 - INFO - Spawn connection from 20164.1.1337.6001 1000
+2016-11-01 04:30:51,649 - playground.twisted.endpoints.GateEndpoint - INFO - Callback protocol <playground.twisted.endpoints.GateEndpoint.GateCallbackProtocol object at 0x7f381a398310> initialized for gate 20164.1.1337.5001:13370 to 20164.1.1337.6001:1000
+2016-11-01 04:30:51,649 - playground.twisted.endpoints.GateEndpoint - INFO - Setting higher layer transport <class 'playground.twisted.endpoints.GateEndpoint.GateTransport'> Transport 20164.1.1337.5001: 13370 to 20164.1.1337.6001: 1000 over <GateCallbackProtocol #0 on 19523>
+2016-11-01 04:30:51,674 - root - DEBUG - Starting state machine RIP State Machine in state LISTEN
+2016-11-01 04:30:51,695 - root - DEBUG - State machine RIP State Machine in state LISTEN received signal RECV_SNN (RIP.RIPMessage v1.0 (7f381a398510))
+2016-11-01 04:30:51,696 - root - DEBUG - State machine RIP State Machine existing current state LISTEN
+2016-11-01 04:30:51,696 - root - DEBUG - State machine RIP State Machine entering state SNN-RECV
+2016-11-01 04:30:51,790 - root - DEBUG - State machine RIP State Machine in state SNN-RECV received signal ACK_RCVD (RIP.RIPMessage v1.0 (7f381a3987d0))
+2016-11-01 04:30:51,790 - root - DEBUG - State machine RIP State Machine existing current state SNN-RECV
+2016-11-01 04:30:51,790 - root - DEBUG - State machine RIP State Machine entering state ESTAB
+2016-11-01 04:31:02,727 - playground.twisted.endpoints.GateEndpoint - INFO - Gate Callback connection lost. Disconnecting higher protocol. reason=[Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
