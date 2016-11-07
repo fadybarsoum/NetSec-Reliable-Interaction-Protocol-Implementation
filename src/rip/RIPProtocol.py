@@ -60,11 +60,11 @@ class RIPMessage(MessageDefinition):
             print(">> [SNN] <<")
         print("   Sequence #\t%s" % msg.sequence_number)
         print("Acknowledge #\t%s" % msg.acknowledgement_number)
-        #print(" Session ID #\t%s" % msg.sessionID)
+        print(" Session ID #\t%s" % msg.sessionID)
         if "UNSET" not in str(msg.certificate):
             print("Cert list len\t%s" % len(msg.certificate))
         print("DATA (%s):" % (len(msg.data)))
-        print(msg.data)
+        #print(msg.data)
         print("[END RIP MESSAGE]\033[0m")
     
 class RIPTransport(StackingTransport):
@@ -79,13 +79,17 @@ class RIPTransport(StackingTransport):
         s.lowerTransport().write(ripMessage.__serialize__())
 
     def loseConnection(s):
+        #print("Transport loseConnection called")
         s.ripP.loseConnection()
+
+    def actuallyLoseConnection(s):
+        super(RIPTransport, s).loseConnection()
 
 class RIPProtocol(StackingProtocolMixin, Protocol):
     def __init__(s):
         s.debug = False
         s.errordebug = True
-        s.statusdebug = True
+        s.statusdebug = False
 
         s.messages = MessageStorage()
         s.OBBuffer = "" # outbound buffer, should prbly be a list
@@ -95,6 +99,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.waiting = False
         s.finishing = False
         s.closeRcvd = False
+        s.finalExpSeq = None
         s.closeSent = False
         s.shuttingDown = False
         
@@ -110,7 +115,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.rcvdMsgs = dict() # unprocessed rcvdMsgs
         s.deferreds = list() # so we can disable them when shutting down
         
-        s.MSS = 2048 # fixed
+        s.MSS = 4096 # fixed
         s.maxUnAcked = 256
         s.transmitDelay = 0.005
         s.retransmit_delay = 3
@@ -151,6 +156,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.makeHigherConnection(s.ripT)
         s.ripPrint("Higher connection made")
         s.sendDataOut()
+        s.processDataIn()
 
 
     # Checks then routes the incoming message to the appropriate parser
@@ -170,7 +176,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
                 #s.ripPrintError("Signature doesn't match/certs invalid")
                 continue # discard this message
             #try:
-            if not s.connected: # there must be an FSM way to do this...
+            if s.connected == False: # there must be an FSM way to do this...
                 if msg.acknowledgement_flag == True: # is this an ACK of a SNN
                     if msg.sequence_number_notification_flag == True: # and an SNN
                         if "UNSET" not in str(msg.certificate) and int(msg.certificate[1],16) == int(s.myNonce,16)+1: # Check nonce
@@ -198,22 +204,35 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
                 if msg.sequence_number_notification_flag == True:
                     s.fsm.signal("RECV_SNN_AFTER_ESTAB", msg)
                     return
-                s.processDataIn(msg)
+                if msg.close_flag == True:
+                    s.closeRcvd = True
+                    s.finalExpSeq = msg.sequence_number
+                    s.ripPrintError("Close rcvd (#%s)" % s.finalExpSeq)
+                    s.sendAck(msg)
+                    if s.sendClose == True:
+                        s.ripPrintError("Since send close flag already up, sending an ack instead")
+                        #s.sendClose = False
+                        #s.shutdown("Close rcvd when close flag up. Assuming ack", None)
+                        #return
+                    #s.waitToAckClose("Received Close request", prior)
+                    #s.fsm.signal("RECV_CLOSE", prior)
+                # Process ACK
+                if msg.acknowledgement_flag == True:
+                    s.lastAckRcvd = max(s.lastAckRcvd, msg.acknowledgement_number)
+                    s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
+                    if s.closeSent == True and msg.acknowledgement_number == s.seqnum:
+                        s.ripPrintError("Ack to a close received")
+                        s.shutdown("Ack to a sent close rcvd. Shutting down", msg)
+                else:
+                    s.rcvdMsgs[msg.sequence_number] = msg
         #except: s.ripPrintError("Error redirecting incoming message")
             
-    def processDataIn(s, msg):
+    def processDataIn(s):
         #try:
-            #  Process ACK
-            if msg.acknowledgement_flag == True:
-                s.lastAckRcvd = max(s.lastAckRcvd, msg.acknowledgement_number)
-                s.ripPrint("ACK received and processed (%s)" % s.lastAckRcvd)
-                if s.fsm.currentState() == "CLOSE-RQSTD" and s.lastAckRcvd == s.seqnum:
-                    s.fsm.signal("CLOSE_ACK_RCVD")
-                return
+        if s.connected == True:
             #s.ripPrint("Processing data in")
-            s.rcvdMsgs[msg.sequence_number] = msg
             updateFlag = True
-            while updateFlag:
+            while updateFlag == True:
                 updateFlag = False
                 #s.ripPrint("Looking for expectedSeq # %s in rcvdMsgs (%s)" % (s.expectedSeq,len(s.rcvdMsgs)))
                 for prevk in s.rcvdMsgs.keys():
@@ -221,21 +240,21 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
                     # need to add something that will clean up < expected sequence messages
                     if prior.sequence_number == s.expectedSeq:
                         #s.ripPrint("Found the msg, processing...")
-                        s.expectedSeq+=max(len(prior.data),0)
+                        s.expectedSeq+=max(len(prior.data),1)
                         if prior.close_flag == True:
-                            s.closeRcvd = True
-                            s.waitToAckClose("Received Close request", prior)
-                            #s.fsm.signal("RECV_CLOSE", prior)
-                        else:
-                            s.sendAck(prior)
+                            if s.closeSent == True:
+                                s.ripPrintError("Rcvd close but a close has already been sent. Just shutdown")
+                                s.shutdown("Close rcvd despite having sent a close", prior)
+                        s.sendAck(prior)
                         prior = s.rcvdMsgs.pop(prevk, None)
                         updateFlag = True
-                        #if len(prior.data) > 0:
-                        s.higherProtocol() and s.higherProtocol().dataReceived(prior.data)
+                        if len(prior.data) > 0:
+                            s.higherProtocol() and s.higherProtocol().dataReceived(prior.data)
                     elif prior.sequence_number < s.expectedSeq:
                         s.ripPrint("Found an older message??? Removing it....")
                         prior = s.rcvdMsgs.pop(prevk, None)
                         updateFlag = True
+        s.deferreds.append( deferLater(reactor, 0.001, s.processDataIn) )
         #except: s.ripPrintError("Error with processing incoming message")
     
     def sendMessage(s):
@@ -248,13 +267,24 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             s.AckQ = list()
         # then see if any initial messages are queued
         # (assuming you've been receiving ACKs)
-        elif len(s.transmitQ) > 0 and len(s.retransmitQ) < s.maxUnAcked:
+        elif len(s.transmitQ) > 0 and len(s.retransmitQ) < s.maxUnAcked and s.closeSent == False:
             s.ripPrint("Found a queued message to send")
             msg = s.transmitQ.pop(0)
             triesLeft = s.maxAttempts
             s.retransmitQ.append([s.maxAttempts, clock()+ s.retransmit_delay, msg])
             #msg.printMessageNicely()
             s.ripPrint("Tries Left: %s" % triesLeft)
+        elif s.sendClose == True and s.closeSent == False and len(s.transmitQ) == 0:
+            '''
+            if s.closeRcvd == True:
+                s.ripPrintError("Close flag up but close received. Waiting to send that Ack")
+                return
+                #'''
+            s.closeSent = True
+            s.ripPrintError("Transmit queue complete and close flag up. Sending close request.")
+            msg = s.sendCloseReq("Transmit queue complete and close flag up. Sending close request.", None)
+            triesLeft = s.maxAttempts
+            s.retransmitQ.append([s.maxAttempts, clock()+ s.retransmit_delay, msg])
         elif len(s.retransmitQ) > 0:
             #s.ripPrint("Searching for a retransmit...")
             while len(s.retransmitQ) > 0 and msg == None:
@@ -279,16 +309,22 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             msg = None
 
         if msg != None:
-            # checks to see if the message should be sent
-            #s.ripPrint("Want to send # %s  Last ACK Rcvd: %s" % (msg.sequence_number, s.lastAckRcvd))
             msg = s.signMessage(msg)
             # send message
             s.ripPrint("Sending # %s  ACK# %s  triesLeft= %d" % (msg.sequence_number, msg.acknowledgement_number, triesLeft))
+            if s.closeRcvd == True:
+                if msg.acknowledgement_flag == True and msg.acknowledgement_number == s.finalExpSeq +1:
+                    s.ripPrintError("Sending an ACK to a close")
+                    s.shutdown("Close request responded to", None)
+                elif msg.close_flag == True:
+                    s.ripPrintError("Switching a close to a close ACK")
+                    msg.acknowledgement_flag = True
+                    msg.acknowledgement_number = s.finalExpSeq+1
+                    msg.close_flag = False
+                    msg.sequence_number = msg.sequence_number
+                    msg = s.signMessage(msg)
+                    s.shutdown("Close request responded to", None)
             s.ripT.tSend(msg)
-            if msg.close_flag == True:
-                s.ripPrintError("Close Request Sent")
-                if s.closeSent == False:
-                    s.fsm.signal("CLOSE_SENT", msg)
         s.deferreds.append( deferLater(reactor, s.transmitDelay, s.sendMessage) )
     
     def processOut(s, data):
@@ -296,6 +332,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
 
     def sendDataOut(s): # recursively sends data with delays to prevent blocking
         bufferSize = len(s.OBBuffer)
+        bdelay = 0
         if bufferSize > 0:
             EoB = min(bufferSize, s.MSS)
             dataseg = s.OBBuffer[:EoB]
@@ -308,13 +345,11 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             #s.sendMessage(msg, s.maxAttempts)
             s.transmitQ.append(msg)
             if len(s.OBBuffer) == 0:
+                bdelay = 0.01
                 s.ripPrint("Outbound buffer finished")
-        
         else:
-            if s.sendClose == True and s.waiting == False and s.fsm.currentState() != "CLOSE-RQSTD":
-                s.waiting = True
-                s.sendCloseReq("Done buffering data. Adding Close Request to queue", None)
-        s.deferreds.append( deferLater(reactor, .01, s.sendDataOut) )
+            bdelay = 0.01
+        s.deferreds.append( deferLater(reactor, bdelay, s.sendDataOut) )
         
     
     def isDuplicate(s, msg):
@@ -374,6 +409,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             result = rsaVerifier.verify(hasher, signature)
             if not result: s.ripPrintError("Signature incorrect")
             return result
+            # I should add a check on the session ID
         except Exception:
             s.ripPrintError(str(Exception))
             s.ripPrintError("Error checking signature. Assuming failed")
@@ -399,10 +435,11 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             ("CLOSE", "CLOSED"),
             onEnter = s.sendAckOfSNN)
         s.fsm.addState("ESTAB", 
-            ("RECV_CLOSE","CLOSE-RCVD"),
-            ("CLOSE_SENT","CLOSE-RQSTD"),
+            #("RECV_CLOSE","CLOSE-RCVD"),
+            #("CLOSE_SENT","CLOSE-RQSTD"),
             ("RECOVER", "SNN-SENT"),
             onEnter = s.connectionEstablished)
+        '''
         s.fsm.addState("CLOSE-RCVD", 
             ("CLOSE_SENT","CLOSED"),
             ("CLOSE_ACK_SENT","CLOSED"),
@@ -414,6 +451,7 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
             ("TIMEOUT_CLOSE_ACK", "CLOSED"),
             onEnter = s.callWaitForAck,
             onExit = s.shutdown)
+        #'''
         s.fsm.addState("ERROR-STATE", onEnter = s.killConnection)
         return s.fsm
         
@@ -473,17 +511,19 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.transmitQ.append(msg)
         
     def sendAck(s, rcvd):
-        #s.ripPrint("Sending Ack")
-        msg = RIPMessage()
-        msg.sequence_number = s.seqnum
-        msg.acknowledgement_flag = True
-        #msg.acknowledgement_number = rcvd.sequence_number + len(rcvd.data)
-        msg.acknowledgement_number = s.expectedSeq
-        s.lastAckSent = msg.acknowledgement_number
-        msg.sessionID = s.sessionID
-        #s.sendMessage(msg, 1)
-        s.AckQ.append(msg)
-    
+        if s.connected == True:
+            s.ripPrint("Sending Ack")
+            msg = RIPMessage()
+            msg.sequence_number = s.seqnum
+            msg.acknowledgement_flag = True
+            #msg.acknowledgement_number = rcvd.sequence_number + len(rcvd.data)
+            msg.acknowledgement_number = s.expectedSeq
+            s.lastAckSent = msg.acknowledgement_number
+            msg.sessionID = s.sessionID
+            #s.sendMessage(msg, 1)
+            s.AckQ.append(msg)
+
+    '''
     def callWaitForAck(s, signal, rcvd):
         s.deferreds.append( deferLater(reactor, 120, s.fsm.signal, "TIMEOUT_CLOSE_ACK", None) )
         s.waitForCloseAck(signal, rcvd)
@@ -508,15 +548,34 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.ripPrintError("Sending close ACK")
         s.sendAck(rcvd)
         s.fsm.signal("CLOSE_ACK_SENT", rcvd)
-    
+
+    def isNotDone(s): # checks if msgs still need to be sent, confirmed, or rcvd
+        return  len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum or len(s.rcvdMsgs) > 0 or len(s.AckQ) > 0 or len(s.transmitQ) > 0 #or len(s.retransmitQ) > 0
+    #'''
+
     def shutdown(s, signal, msg):
-        s.ripPrintError("\033[91mShutting down: %s \033[0m" % signal)
-        for d in s.deferreds:
-            d.cancel()
-        try:
-            s.higherProtocol().connectionLost()
-        except: s.ripPrintError("Shutdown unable to call higher protocol")
-        s.ripPrint("Shut down complete!")
+        s.deferreds.append( deferLater(reactor, .5, s.actuallyShutdown, signal, msg) )
+    
+    def actuallyShutdown(s,signal,msg):
+        if s.shuttingDown == False:
+            s.shuttingDown = True
+            s.ripPrintError("\033[91mShutting down: %s \033[0m" % signal)
+            [d.cancel() for d in s.deferreds]
+            try:
+                s.higherProtocol().connectionLost()
+            except: s.ripPrintError("Shutdown unable to complete disengaging")
+            s.transport.actuallyLoseConnection()
+            s.transport = None
+            s.ripT.lowerTransport().loseConnection()
+            s.ripT.ripP = None
+            s.ripT = None
+            s.ripPrintError("Shut down complete!")
+        else:
+            s.ripPrintError("Shutdown already called....")
+
+    def __del__(s):
+        s.ripPrintError("__del__ called!")
+        super(RIPProtocol, s).__del__()
 
     def killConnection(s, signal, _ignore):
         #s.connectionLost("Kill command")
@@ -525,34 +584,32 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
     def loseConnection(s):
         s.ripPrintError("Lose Connection called")
         #s.higherProtocol().connectionLost()
+        if s.closeRcvd == True:
+            s.ripPrintError("... but close already rcvd")
         s.sendClose = True
 
     def connectionLost(s, reason):
         # called when connection is lost, should keep processing
-        if s.isNotDone():
-            s.ripPrintError("connectionLost but still processing (%s rcvdMsgs)" % len(s.rcvdMsgs))
-            s.deferreds.append(deferLater(reactor, .5, s.connectionLost, reason))
-        else:
-            s.ripPrintError("connectionLost: calling shutdown()")
-            s.shutdown(reason, None)
+        pass
 
     def close(s):
         s.ripPrintError("Recevied Close command")
         s.loseConnection()
 
     def sendCloseReq(s,signal, _ignore):
-        s.ripPrintError("Adding close request to queue")
+        s.ripPrintError("Forming close request to queue")
         msg = RIPMessage()
         msg.sequence_number = s.seqnum
         s.seqnum += 1
         msg.close_flag = True
         msg.sessionID = s.sessionID
         #s.sendMessage(msg, s.maxAttempts)
-        s.transmitQ.append(msg)
+        #s.transmitQ.append(msg)
         s.deferreds.append( deferLater(reactor, 120, s.fsm.signal, "TIMEOUT_CLOSE_ACK", None) )
+        return msg
 
-    def isNotDone(s): # checks if msgs still need to be sent, confirmed, or rcvd
-        return  len(s.OBBuffer) > 0 or s.lastAckRcvd < s.seqnum or len(s.rcvdMsgs) > 0 or len(s.AckQ) > 0 or len(s.transmitQ) > 0 #or len(s.retransmitQ) > 0
+    def closeAcked(s):
+        return s.closeSent and s.seqnum == s.lastAckRcvd
 
     def signMessage(s, msg):
         msg.signature = ""
@@ -596,7 +653,7 @@ class RIPFactory(StackingFactoryMixin, Factory):
     protocol = RIPProtocol
 
 class RIPServerFactory(RIPFactory):
-	protocol = RIPServerProtocol
+    protocol = RIPServerProtocol
     
 ConnectFactory = RIPFactory
 ListenFactory = RIPServerFactory
