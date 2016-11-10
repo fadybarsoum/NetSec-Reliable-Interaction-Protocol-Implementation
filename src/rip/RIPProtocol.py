@@ -504,7 +504,10 @@ class RIPProtocol(StackingProtocolMixin, Protocol):
         s.sessionID = str(s.myNonce) + rcvdMsg.certificate[0]
         msg.sessionID = s.sessionID
         #s.sendMessage(msg, s.maxAttempts)
-        s.transmitQ.append(msg)
+        if s.connected == True:
+            s.AckQ.append(msg)
+        else:
+            s.transmitQ.append(msg)
         
     def sendAck(s, rcvd):
         if s.connected == True:
